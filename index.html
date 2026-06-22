@@ -9,19 +9,14 @@
 
 <style>
 body{
-  font-family: Arial, sans-serif;
+  font-family: Arial,sans-serif;
   text-align:center;
   padding:20px;
 }
-
 #reader{
   width:100%;
   max-width:400px;
   margin:auto;
-}
-
-h2{
-  color:#333;
 }
 </style>
 </head>
@@ -29,49 +24,55 @@ h2{
 <body>
 
 <h2>🚖 QRコードをスキャンしてください</h2>
-
 <div id="reader"></div>
 
 <script>
 
+let opened = false;
+
+function openUrl(url){
+  if(opened) return;
+  opened = true;
+
+  html5QrCode.stop().catch(()=>{});
+
+  // Google Form directly open
+  window.top.location = url;
+}
+
 const html5QrCode = new Html5Qrcode("reader");
 
-Html5Qrcode.getCameras().then(devices => {
+Html5Qrcode.getCameras().then(cameras => {
 
-  if (!devices.length) {
-    document.body.innerHTML = "<h3>カメラが見つかりません。</h3>";
+  if (!cameras.length) {
+    alert("カメラが見つかりません");
     return;
   }
 
-  const backCamera = devices[devices.length - 1];
+  const cameraId = cameras[cameras.length - 1].id;
 
   html5QrCode.start(
-    backCamera.id,
+    cameraId,
     {
       fps: 10,
-      qrbox: 250
+      qrbox: { width: 250, height: 250 }
     },
     (decodedText) => {
 
-      html5QrCode.stop();
-
       let url = decodedText.trim();
 
-      if (!url.startsWith("http://") &&
-          !url.startsWith("https://")) {
-        url = "https://" + url;
+      if (
+        url.startsWith("http://") ||
+        url.startsWith("https://")
+      ) {
+        openUrl(url);
+      } else {
+        alert(url);
       }
 
-      location.replace(url);
-
     },
-    (errorMessage) => {}
+    () => {}
   );
-
-}).catch(err => {
-
-  document.body.innerHTML =
-    "<h3>カメラへのアクセスに失敗しました。</h3>";
 
 });
 

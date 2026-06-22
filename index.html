@@ -36,58 +36,42 @@ h2{
 
 const html5QrCode = new Html5Qrcode("reader");
 
-function startScanner(cameraId){
+Html5Qrcode.getCameras().then(devices => {
+
+  if (!devices.length) {
+    document.body.innerHTML = "<h3>カメラが見つかりません。</h3>";
+    return;
+  }
+
+  const backCamera = devices[devices.length - 1];
 
   html5QrCode.start(
-    cameraId,
+    backCamera.id,
     {
       fps: 10,
       qrbox: 250
     },
+    (decodedText) => {
 
-    function(decodedText){
+      html5QrCode.stop();
 
-      html5QrCode.stop().then(() => {
+      let url = decodedText.trim();
 
-        if(
-          decodedText.startsWith("http://") ||
-          decodedText.startsWith("https://")
-        ){
-          window.location.href = decodedText;
-        }else{
-          alert("QR内容: " + decodedText);
-        }
+      if (!url.startsWith("http://") &&
+          !url.startsWith("https://")) {
+        url = "https://" + url;
+      }
 
-      });
+      location.replace(url);
 
     },
-
-    function(errorMessage){}
+    (errorMessage) => {}
   );
-
-}
-
-Html5Qrcode.getCameras().then(devices => {
-
-  if(devices && devices.length){
-
-    let backCamera =
-      devices.find(d =>
-        d.label.toLowerCase().includes("back")
-      ) ||
-      devices.find(d =>
-        d.label.toLowerCase().includes("rear")
-      ) ||
-      devices[devices.length - 1];
-
-    startScanner(backCamera.id);
-
-  }
 
 }).catch(err => {
 
   document.body.innerHTML =
-    "<h3>カメラにアクセスできません。</h3>";
+    "<h3>カメラへのアクセスに失敗しました。</h3>";
 
 });
 
